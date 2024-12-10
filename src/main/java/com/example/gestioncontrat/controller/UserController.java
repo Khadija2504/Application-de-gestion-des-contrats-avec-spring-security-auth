@@ -35,15 +35,6 @@ public class UserController {
         return "redirect:/login";
     }
 
-//    @PostMapping("/login")
-//    public String loginUser(@ModelAttribute("user") User user, Model model) {
-//        if (userService.findByEmail(user.getEmail()) != null) {
-//            model.addAttribute("error", "Email already registered");
-//        }
-//        userService.loadUserByUsername(user.getEmail());
-//        return "redirect:/home";
-//    }
-
     @GetMapping("/login")
     public String showLoginForm(Map<String, Object> model) {
         model.put("loginForm", new LoginForm());
