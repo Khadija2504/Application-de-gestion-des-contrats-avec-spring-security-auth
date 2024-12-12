@@ -55,5 +55,6 @@ jobs:
       - name: Build with Maven
         run: mvn clean install
 
+
       - name: Upload dependency graph
         uses: advanced-security/maven-dependency-submission-action@v1
