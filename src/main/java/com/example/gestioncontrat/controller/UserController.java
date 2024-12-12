@@ -53,17 +53,6 @@ public class UserController {
         }
     }
 
-    @GetMapping("/somePage")
-    public String accessPage(Model model, Authentication authentication) {
-        if (authentication != null) {
-            Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
-            for (GrantedAuthority authority : authorities) {
-                System.out.println("Authority: " + authority.getAuthority());
-            }
-        }
-        return "somePage";
-    }
-
     @GetMapping("/logout")
     public String logout(HttpSession session) {
         session.invalidate();

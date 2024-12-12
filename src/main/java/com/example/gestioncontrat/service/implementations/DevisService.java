@@ -2,19 +2,30 @@ package com.example.gestioncontrat.service.implementations;
 
 
 import com.example.gestioncontrat.dao.implementations.DevisDAO;
+import com.example.gestioncontrat.dao.implementations.UserActivityDAO;
 import com.example.gestioncontrat.dao.interfaces.DevisInterface;
+import com.example.gestioncontrat.dao.interfaces.UserActivityInterface;
 import com.example.gestioncontrat.enums.Type;
 import com.example.gestioncontrat.model.Devis;
 import com.example.gestioncontrat.model.User;
+import com.example.gestioncontrat.model.UserActivity;
 import com.example.gestioncontrat.service.interfaces.DevisServiceInterface;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.Date;
 
 @Service
 @Transactional
 public class DevisService implements DevisServiceInterface {
+    private final UserActivityInterface activityDAO;
+
+    @Autowired
+    public DevisService(UserActivityInterface activityDAO) {
+        this.activityDAO = activityDAO;
+    }
 
 @Override
     public double calculateDevis(Type type, int age, double valeurBien, String typeVehicule,
@@ -82,6 +93,13 @@ public class DevisService implements DevisServiceInterface {
 @Override
     public Devis createDevis(User user, Type type, double calculatedAmount, String details) {
         Devis devis = new Devis(type, calculatedAmount, new Date(), details, user);
+        UserActivity activity = new UserActivity(
+                user.getEmail(),
+                "Created Devis",
+                "/devis/form",
+                LocalDateTime.now()
+        );
+        activityDAO.save(activity);
         return devis;
     }
 }
