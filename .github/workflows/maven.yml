@@ -16,10 +16,6 @@ on:
 jobs:
   dependency-submission:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      id-token: write
-      dependency-graph: write
 
     steps:
       - name: Checkout code
@@ -54,7 +50,3 @@ jobs:
 
       - name: Build with Maven
         run: mvn clean install
-
-
-      - name: Upload dependency graph
-        uses: advanced-security/maven-dependency-submission-action@v1
