@@ -95,4 +95,9 @@ public class DevisController {
         model.addAttribute("devis", new Devis());
         return "master/devisForm";
     }
+
+    @GetMapping("/home")
+    public String home() {
+        return "master/home";
+    }
 }

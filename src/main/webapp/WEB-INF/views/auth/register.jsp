@@ -52,7 +52,7 @@
 </head>
 <body>
 <h2>Register</h2>
-<form action="${pageContext.request.contextPath}/register" method="post">
+<form method="post" action="${pageContext.request.contextPath}/auth/register">
   <label for="name">Name:</label>
   <input type="text" id="name" name="name" required><br>
 
@@ -74,5 +74,6 @@
     <div style="color:red;">${error}</div>
   </c:if>
 </form>
+<p><a href="${pageContext.request.contextPath}/auth/login">Already have an account? Login</a></p>
 </body>
 </html>

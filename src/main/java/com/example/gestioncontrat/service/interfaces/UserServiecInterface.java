@@ -7,8 +7,11 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import java.util.Optional;
 
 public interface UserServiecInterface {
-    void register(User user);
-    User findByEmail(String email);
-    UserDetails loadUserByUsername(String email) throws UsernameNotFoundException;
-    boolean checkLogin(String userName, String userPassword);
+//    void register(User user);
+//    User findByEmail(String email);
+//    UserDetails loadUserByUsername(String email) throws UsernameNotFoundException;
+//   boolean checkLogin(String userName, String userPassword);
+    void save(User user);
+    Optional<User> findByEmail(String email);
+    User authenticate(String email, String password);
 }
