@@ -1,14 +1,17 @@
 package com.example.gestioncontrat.service.implementations;
 
+import com.example.gestioncontrat.dao.interfaces.UserActivityInterface;
 import com.example.gestioncontrat.dao.interfaces.UserInterface;
 import com.example.gestioncontrat.model.Role;
 import com.example.gestioncontrat.model.User;
+import com.example.gestioncontrat.model.UserActivity;
 import com.example.gestioncontrat.service.interfaces.UserServiecInterface;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 @Service
@@ -17,9 +20,19 @@ public class UserService implements UserServiecInterface {
     @Autowired
     private UserInterface userInterface;
 
+    @Autowired
+    private UserActivityInterface userActivityDAO;
+
     @Override
     public void save(User user) {
         userInterface.save(user);
+        UserActivity activity = new UserActivity(
+                user.getEmail(),
+                "User Registered",
+                "/auth/register",
+                LocalDateTime.now()
+        );
+        userActivityDAO.save(activity);
     }
 
     @Override
@@ -39,6 +52,13 @@ public class UserService implements UserServiecInterface {
 
             if (passwordEncoder.matches(password, user.getPassword())) {
                 System.out.println("Password matched!");
+                UserActivity activity = new UserActivity(
+                        user.getEmail(),
+                        "User Logged In",
+                        "/user/login",
+                        LocalDateTime.now()
+                );
+                userActivityDAO.save(activity);
                 return user;
             } else {
                 System.out.println("Password mismatch!");
