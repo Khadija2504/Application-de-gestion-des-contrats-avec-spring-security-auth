@@ -15,6 +15,12 @@ on:
     branches: [ "master" ]
 
 jobs:
+  dependency-submission:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+      dependency-graph: write
   build:
 
     runs-on: ubuntu-latest
