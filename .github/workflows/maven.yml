@@ -17,6 +17,10 @@ jobs:
   dependency-submission:
     runs-on: ubuntu-latest
 
+    permissions:
+      contents: read
+      security-events: write
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -33,6 +37,8 @@ jobs:
 
       - name: Submit dependency graph
         uses: advanced-security/maven-dependency-submission-action@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
 
   build:
     runs-on: ubuntu-latest
