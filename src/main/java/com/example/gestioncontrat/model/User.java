@@ -8,8 +8,7 @@
     import java.util.Set;
 
     @Entity
-    @Getter
-    @Setter
+    @Data
     @Table(name = "users")
     public class User {
         @Id
