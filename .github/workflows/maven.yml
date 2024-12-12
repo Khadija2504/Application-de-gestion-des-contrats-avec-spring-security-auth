@@ -32,13 +32,11 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
-      - name: Build with Maven (dependency submission)
+      - name: Build with Maven
         run: mvn clean install
 
       - name: Submit dependency graph
         uses: advanced-security/maven-dependency-submission-action@v1
-        with:
-          dependency-graph: true
 
   build:
     runs-on: ubuntu-latest
