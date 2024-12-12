@@ -1,54 +1,52 @@
 package com.example.gestioncontrat.service.implementations;
 
 import com.example.gestioncontrat.dao.interfaces.UserInterface;
+import com.example.gestioncontrat.model.Role;
 import com.example.gestioncontrat.model.User;
 import com.example.gestioncontrat.service.interfaces.UserServiecInterface;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import jakarta.transaction.Transactional;
 
-import java.util.Collections;
+import java.util.Optional;
 
-@Service("userService")
-public class UserService implements UserServiecInterface, UserDetailsService {
+@Service
+public class UserService implements UserServiecInterface {
+
     @Autowired
-    private UserInterface userDao;
+    private UserInterface userInterface;
 
-    private final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
-
-    @Transactional
     @Override
-    public void register(User user) {
-        if (userDao.findByEmail(user.getEmail()).isPresent()) {
-            throw new RuntimeException("User with this email already exists!");
+    public void save(User user) {
+        userInterface.save(user);
+    }
+
+    @Override
+    public Optional<User> findByEmail(String email) {
+        return userInterface.findByEmail(email);
+    }
+
+    public User authenticate(String email, String password) {
+        Optional<User> userOptional = userInterface.findByEmail(email);
+
+        if (userOptional.isPresent()) {
+            User user = userOptional.get();
+            BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+
+            System.out.println("Stored password: " + user.getPassword());
+            System.out.println("Entered password: " + password);
+
+            if (passwordEncoder.matches(password, user.getPassword())) {
+                System.out.println("Password matched!");
+                return user;
+            } else {
+                System.out.println("Password mismatch!");
+            }
         }
-        user.setPassword(encoder.encode(user.getPassword()));
-        userDao.save(user);
+
+        System.out.println("User not found or password incorrect");
+        return null;
     }
 
-    @Override
-    public User findByEmail(String email) {
-        return userDao.findByEmail(email).orElse(null);
-    }
-
-    @Override
-    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        User user = userDao.findByEmail(email).orElseThrow(() ->
-                new UsernameNotFoundException("User not found with email: " + email));
-
-        return new org.springframework.security.core.userdetails.User(
-                user.getName(),
-                user.getPassword(),
-                Collections.emptyList()
-        );
-    }
-    @Override
-    public boolean checkLogin(String email, String password) {
-        System.out.println("Service: Checking login");
-        return userDao.checkLogin(email, password);
-    }
 }

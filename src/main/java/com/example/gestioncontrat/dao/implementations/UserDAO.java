@@ -4,20 +4,18 @@ import com.example.gestioncontrat.dao.interfaces.UserInterface;
 import com.example.gestioncontrat.model.User;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
 
 @Repository
+@Transactional
 public class UserDAO implements UserInterface {
 
     @PersistenceContext
     private EntityManager entityManager;
-    @Autowired
-    private PasswordEncoder passwordEncoder;
 
     @Override
     public void save(User user) {
@@ -26,25 +24,11 @@ public class UserDAO implements UserInterface {
 
     @Override
     public Optional<User> findByEmail(String email) {
-        List<User> users = entityManager
-                .createQuery("SELECT u FROM User u WHERE u.email = :email", User.class)
+        List<User> users = entityManager.createQuery(
+                        "SELECT u FROM User u WHERE u.email = :email", User.class)
                 .setParameter("email", email)
                 .getResultList();
+        System.out.println("Users found for email " + email + ": " + users.size());
         return users.isEmpty() ? Optional.empty() : Optional.of(users.get(0));
-    }
-
-    public boolean checkLogin(String email, String password) {
-        Optional<User> optionalUser = findByEmail(email);
-        if (optionalUser.isPresent()) {
-            User user = optionalUser.get();
-            System.out.println(user);
-            return passwordEncoder.matches(password, user.getPassword());
-        }
-        return false;
-    }
-
-    @Override
-    public Optional<User> findByEmail(String email, String password) {
-        return Optional.empty();
     }
 }

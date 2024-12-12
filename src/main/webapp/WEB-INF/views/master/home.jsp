@@ -12,5 +12,6 @@
 </head>
 <body>
 <p>Hello in the home page</p>
+<a href="${pageContext.request.contextPath}/auth/logout">Logout</a>
 </body>
 </html>

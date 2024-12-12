@@ -1,0 +1,26 @@
+spring:
+  application:
+    name: GestionContrat
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/PigeonSkyRaceSecurity
+    username: postgres
+    password: 123456789
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+  spring:
+    main:
+      allow-circular-references: true
+      allow-bean-definition-overriding: true
+
+logging:
+  level:
+    org:
+      springframework:
+        security: DEBUG

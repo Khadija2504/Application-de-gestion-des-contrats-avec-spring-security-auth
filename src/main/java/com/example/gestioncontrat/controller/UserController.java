@@ -1,64 +1,90 @@
 package com.example.gestioncontrat.controller;
 
-import com.example.gestioncontrat.form.LoginForm;
+import com.example.gestioncontrat.dao.interfaces.RoleInterface;
+import com.example.gestioncontrat.model.Role;
 import com.example.gestioncontrat.model.User;
-import com.example.gestioncontrat.service.implementations.UserService;
 import com.example.gestioncontrat.service.interfaces.UserServiecInterface;
+import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Map;
-import jakarta.validation.Valid;
+import java.util.Collection;
 
+@RequestMapping("/auth")
 @Controller
 public class UserController {
 
     @Autowired
-    private UserServiecInterface userService = new UserService();
+    private UserServiecInterface userService;
+
+    @Autowired
+    private RoleInterface roleService;
+
+    @Autowired
+    BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+
+    @GetMapping("/login")
+    public String showLoginPage() {
+        return "auth/login";
+    }
+
+    @PostMapping("/perform_login")
+    public String performLogin(@RequestParam("email") String email,
+                               @RequestParam("password") String password,
+                               HttpSession session,
+                               Model model) {
+        User user = userService.authenticate(email, password);
+        System.out.println(email + password);
+        if (user != null) {
+            System.out.println("user founded");
+            session.setAttribute("loggedInUser", user);
+            System.out.println("logged in user: " + user);
+            return "redirect:/devis/home";
+        } else {
+            System.out.println("failed to login");
+            model.addAttribute("error", "Invalid email or password");
+            return "auth/login";
+        }
+    }
+
+    @GetMapping("/somePage")
+    public String accessPage(Model model, Authentication authentication) {
+        if (authentication != null) {
+            Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
+            for (GrantedAuthority authority : authorities) {
+                System.out.println("Authority: " + authority.getAuthority());
+            }
+        }
+        return "somePage";
+    }
+
+    @GetMapping("/logout")
+    public String logout(HttpSession session) {
+        session.invalidate();
+        return "redirect:/auth/login?logout";
+    }
 
     @GetMapping("/register")
-    public String showRegistrationForm(Model model) {
+    public String showRegisterPage(Model model) {
         model.addAttribute("user", new User());
         return "auth/register";
     }
 
     @PostMapping("/register")
-    public String registerUser(@ModelAttribute("user") User user, Model model) {
-        if (userService.findByEmail(user.getEmail()) != null) {
-            model.addAttribute("error", "Email already registered");
-            return "auth/register";
-        }
-        userService.register(user);
-        return "redirect:/login";
-    }
+    public String registerUser(@ModelAttribute("user") User user) {
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
 
-    @GetMapping("/login")
-    public String showLoginForm(Map<String, Object> model) {
-        model.put("loginForm", new LoginForm());
-        return "auth/login";
-    }
+        Role defaultRole = roleService.findByName("ROLE_USER")
+                .orElseThrow(() -> new RuntimeException("Role not found"));
+        user.setRole(defaultRole);
 
-    @PostMapping("/login")
-    public String processLogin(@Valid LoginForm loginForm, BindingResult result, Map<String, Object> model) {
-        if (result.hasErrors()) {
-            return "auth/login";
-        }
-
-        boolean userExists = userService.checkLogin(loginForm.getEmail(), loginForm.getPassword());
-        if (userExists) {
-            model.put("loginForm", loginForm);
-            return "master/home";
-        } else {
-            result.rejectValue("email", "invaliduser", "Invalid Email or Password!");
-            return "auth/login";
-        }
-    }
-
-    @GetMapping("/home")
-    public String home() {
-        return "master/home";
+        userService.save(user);
+        return "redirect:/auth/login?success";
     }
 }
