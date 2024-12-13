@@ -1,10 +1,3 @@
-# This workflow will build a Java project with Maven, and cache/restore any dependencies to improve the workflow execution time
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-java-with-maven
-
-# This workflow uses actions that are not certified by GitHub.
-# They are provided by a third-party and are governed by
-# separate terms of service, privacy policy, and support
-# documentation.
 name: Java CI with Maven
 
 on:
@@ -13,16 +6,15 @@ on:
   pull_request:
     branches: [ "master" ]
 
+env:
+  DOCKER_HUB_REPO: ${{ secrets.DOCKER_HUB_USERNAME }}/springboot-app
+
 jobs:
-  dependency-submission:
+  build-and-deploy:
     runs-on: ubuntu-latest
 
-    permissions:
-      contents: read
-      security-events: write
-
     steps:
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Set up JDK 17
@@ -33,26 +25,59 @@ jobs:
           cache: maven
 
       - name: Build with Maven
-        run: mvn clean install
+        run: mvn clean package -DskipTests
 
-      - name: Submit dependency graph
-        uses: advanced-security/maven-dependency-submission-action@v1
+      - name: Run tests
+        run: mvn test
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
 
-  build:
-    runs-on: ubuntu-latest
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
+      - name: Build and push Docker images
+        uses: docker/build-push-action@v4
         with:
-          java-version: '17'
-          distribution: 'temurin'
-          cache: maven
+          context: .
+          push: true
+          tags: |
+            ${{ env.DOCKER_HUB_REPO }}:latest
+            ${{ env.DOCKER_HUB_REPO }}:${{ github.sha }}
+          cache-from: type=registry,ref=${{ env.DOCKER_HUB_REPO }}:buildcache
+          cache-to: type=registry,ref=${{ env.DOCKER_HUB_REPO }}:buildcache,mode=max
 
-      - name: Build with Maven
-        run: mvn clean install
+      - name: Set up Docker Compose
+        run: |
+          sudo apt-get install docker-compose
+
+      - name: Start Jenkins and app with Docker Compose
+        run: |
+          echo "version: '3'
+          services:
+            jenkins:
+              image: jenkins/jenkins:lts
+              container_name: jenkins
+              ports:
+                - "8080:8080"
+                - "50000:50000"
+              volumes:
+                - jenkins_home:/var/jenkins_home
+              environment:
+                - JAVA_OPTS=-Djenkins.install.runSetupWizard=false
+            gestioncontrat:
+              image: ${{ env.DOCKER_HUB_REPO }}:${{ github.sha }}
+              container_name: gestioncontrat
+              ports:
+                - "8081:8080"
+              depends_on:
+                - jenkins
+              restart: always
+          volumes:
+            jenkins_home:" > docker-compose.yml
+
+      - name: Run Docker Compose
+        run: docker-compose up -d
