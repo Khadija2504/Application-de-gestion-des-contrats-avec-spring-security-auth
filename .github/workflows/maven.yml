@@ -7,7 +7,7 @@ on:
     branches: [ "master" ]
 
 env:
-  DOCKER_HUB_REPO: ${{ secrets.DOCKER_HUB_USERNAME }}/springboot-app
+  DOCKER_HUB_REPO: ${{ secrets.DOCKER_HUB_USERNAME }}/gestioncontrat
 
 jobs:
   build-and-deploy:
