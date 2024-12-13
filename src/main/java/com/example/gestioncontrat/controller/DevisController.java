@@ -1,12 +1,9 @@
 package com.example.gestioncontrat.controller;
 
-import com.example.gestioncontrat.dao.implementations.ContractDAO;
-import com.example.gestioncontrat.dao.implementations.DevisDAO;
 import com.example.gestioncontrat.dao.interfaces.ContratInterface;
 import com.example.gestioncontrat.dao.interfaces.DevisInterface;
 import com.example.gestioncontrat.enums.*;
 import com.example.gestioncontrat.model.*;
-import com.example.gestioncontrat.service.implementations.DevisService;
 import com.example.gestioncontrat.service.interfaces.DevisServiceInterface;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
