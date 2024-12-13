@@ -1,16 +1,22 @@
 package com.example.gestioncontrat.config;
 
-import com.example.gestioncontrat.config.UserActivityFilter;
+import org.springframework.security.authentication.BadCredentialsException;
 import com.example.gestioncontrat.service.implementations.CustomUserDetailsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 @EnableWebSecurity
@@ -20,12 +26,36 @@ public class SecurityConfig {
     @Autowired
     private CustomUserDetailsService userDetailsService;
 
+    public SecurityConfig(UserActivityFilter userActivityFilter) {
+        this.userActivityFilter = userActivityFilter;
+    }
+
     @Bean
     public BCryptPasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
-    public SecurityConfig(UserActivityFilter userActivityFilter) {
-        this.userActivityFilter = userActivityFilter;
+
+    @Profile("TEST")
+    @Bean
+    public AuthenticationManager testAuthenticationManager() {
+        System.out.println("Using TEST authentication manager");
+        return authentication -> {
+            String username = authentication.getName();
+            return new UsernamePasswordAuthenticationToken(username, null, authentication.getAuthorities());
+        };
+    }
+
+    @Profile("!TEST")
+    @Bean
+    public AuthenticationManager productionAuthenticationManager(PasswordEncoder encoder, UserDetailsService userDetailsService) {
+        System.out.println("Using production authentication manager");
+        return authentication -> {
+            var user = userDetailsService.loadUserByUsername(authentication.getName());
+            if (!encoder.matches(authentication.getCredentials().toString(), user.getPassword())) {
+                throw new BadCredentialsException("Invalid Password!");
+            }
+            return new UsernamePasswordAuthenticationToken(user.getUsername(), null, user.getAuthorities());
+        };
     }
 
     @Bean
@@ -45,10 +75,11 @@ public class SecurityConfig {
                 .logout(logout -> logout
                         .logoutSuccessUrl("/auth/login?logout")
                 )
-                .addFilterAfter(userActivityFilter, org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class);
+                .addFilterAfter(userActivityFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
+
     @Bean
     public DaoAuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
@@ -58,8 +89,7 @@ public class SecurityConfig {
     }
 
     @Autowired
-    public void configureGlobal(AuthenticationManagerBuilder auth) {
+    public void configureGlobal(AuthenticationManagerBuilder auth) throws Exception {
         auth.authenticationProvider(authenticationProvider());
     }
-
 }
