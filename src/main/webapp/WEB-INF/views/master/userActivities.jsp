@@ -75,7 +75,7 @@
             <tr>
                 <td>${activity.username}</td>
                 <td>${activity.action}</td>
-                <td>${pageContext.request.contextPath}${activity.endpoint}</td>
+                <td><a href="${pageContext.request.contextPath}${activity.endpoint}">${activity.endpoint}</a></td>
                 <td class="timestamp">${activity.timestamp}</td>
             </tr>
         </c:forEach>
